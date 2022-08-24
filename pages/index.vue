@@ -1,5 +1,5 @@
 <script>
-import GamifyItem from '~~/components/GamifyItem.vue';
+//import GamifyItem from '~~/components/GamifyItem.vue';
 export default {
   async setup() {
     const { data: trainers } = await useTrainers();
@@ -7,7 +7,7 @@ export default {
       trainers,
     };
   },
-  components: { GamifyItem, GamifyItem }
+  //components: { GamifyItem, GamifyItem }
 };
 </script>
 

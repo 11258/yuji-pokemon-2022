@@ -71,7 +71,7 @@ app.get("/trainer/:trainerName", async (req, res, next) => {
     const { trainerName } = req.params;
     const result = await findTrainer(trainerName); ///////////////
     console.log(`FindTrainer result - ${JSON.stringify(result)}`)
-    res.status(result["$metadata"].httpStatusCode).send(result);
+    res.send(result);
   }
   catch (err) {
     next(err);
