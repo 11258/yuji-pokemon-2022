@@ -1,7 +1,11 @@
 <script>
-import { VITE_SERVER_ORIGIN } from "~/utils/env";
-import trimAvoidCharacters from "~/utils/trimAvoidCharacters";
+import GamifyButton from '~~/components/GamifyButton.vue';
+import GamifyDialog from '~~/components/GamifyDialog.vue';
+import GamifyList from '~~/components/GamifyList.vue';
+import GamifyItem from '~~/components/GamifyItem.vue';
 
+import trimAvoidCharacters from '~~/utils/trimAvoidCharacters';
+import { VITE_SERVER_ORIGIN } from '~~/utils/env';
 export default {
   setup() {
     const router = useRouter();
@@ -11,32 +15,35 @@ export default {
     );
     const valid = computed(() => safeTrainerName.value.length > 0);
     const onSubmit = async () => {
-      const response = await fetch(`${VITE_SERVER_ORIGIN}api/trainer`, {
+      const response = await fetch(`${VITE_SERVER_ORIGIN}/api/trainer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: safeTrainerName.value,
-        }),
+        body: JSON.stringify(
+          {
+            name: safeTrainerName.value,
+          }
+        ),
       });
       if (!response.ok) return;
       router.push(`/trainer/${safeTrainerName.value}`);
-    };
+    }
     const { dialog, onOpen, onClose } = useDialog();
     return {
       trainerName,
       safeTrainerName,
-      valid,
-      onSubmit,
       dialog,
       onOpen,
       onClose,
-    };
+      onSubmit,
+      valid
+    }
   },
+  components: { GamifyButton, GamifyDialog, GamifyList, GamifyItem, GamifyButton, GamifyItem }
 };
 </script>
-
+  
 <template>
   <div>
     <h1>あたらしくはじめる</h1>
@@ -44,39 +51,31 @@ export default {
     <form @submit.prevent>
       <div class="item">
         <label for="name">なまえ</label>
-        <span id="name-description"
-          >とくていの　もじは　とりのぞかれるぞ！</span
-        >
-        <input
-          id="name"
-          @keydown.enter="valid && onOpen(true)"
-          v-model="trainerName"
-          aria-describedby="name-description"
-        />
+        <span id="name-description">
+          とくていの　もじは　とりのぞかれるぞ！
+        </span>
+        <input id="name" @keydown.enter="onOpen(true) && valid" v-model="trainerName"
+          aria-describedby="name-description" />
       </div>
-      <GamifyButton type="button" @click="onOpen(true)" :disabled="!valid"
-        >けってい</GamifyButton
-      >
+      <!-- <GamifyButton type="button" @click="onSubmit">けってい</GamifyButton> -->
+      <GamifyButton type="button" @click="onOpen(true)" :disabled="!valid">けってい</GamifyButton>
+
+      <GamifyDialog v-if="dialog" id="confirm-submit" title="かくにん" :description="`ふむ・・・　きみは　${trainerName}　と　いうんだな！`"
+        @close="onClose">
+        <GamifyList :border="false" direction="horizon">
+          <GamifyItem>
+            <GamifyButton @click="onClose">いいえ</GamifyButton>
+          </GamifyItem>
+          <GamifyItem>
+            <GamifyButton @click="onSubmit">はい</GamifyButton>
+          </GamifyItem>
+        </GamifyList>
+      </GamifyDialog>
+
     </form>
-    <GamifyDialog
-      v-if="dialog"
-      id="confirm-submit"
-      title="かくにん"
-      :description="`ふむ・・・　きみは　${safeTrainerName}　と　いうんだな！`"
-      @close="onClose"
-    >
-      <GamifyList :border="false" direction="horizon">
-        <GamifyItem>
-          <GamifyButton @click="onClose">いいえ</GamifyButton>
-        </GamifyItem>
-        <GamifyItem>
-          <GamifyButton @click="onSubmit">はい</GamifyButton>
-        </GamifyItem>
-      </GamifyList>
-    </GamifyDialog>
   </div>
 </template>
-
+  
 <style scoped>
 form {
   border-radius: 0.5rem;
@@ -84,17 +83,19 @@ form {
   padding: 1.5rem 3rem;
 }
 
-form > :not(:last-child) {
+form> :not(:last-child) {
   display: block;
   margin-bottom: 1rem;
 }
 
-.item > label,
-.item > span {
+.item>label,
+.item>span {
   display: block;
   margin-bottom: 0.25rem;
 }
-.item > span {
+
+.item>span {
   font-size: 0.875rem;
 }
 </style>
+  

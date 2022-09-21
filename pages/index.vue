@@ -1,5 +1,4 @@
 <script>
-//import GamifyItem from '~~/components/GamifyItem.vue';
 export default {
   async setup() {
     const { data: trainers } = await useTrainers();
@@ -7,10 +6,9 @@ export default {
       trainers,
     };
   },
-  //components: { GamifyItem, GamifyItem }
 };
 </script>
-
+  
 <template>
   <div>
     <h1>ポケットモンスター</h1>
@@ -27,3 +25,4 @@ export default {
     </GamifyList>
   </div>
 </template>
+  

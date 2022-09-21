@@ -1,8 +1,12 @@
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
-import { findTrainers, upsertTrainer, findTrainer, deleteTrainer } from "./utils/trainer";
+import {
+  findTrainers,
+  findTrainer,
+  upsertTrainer,
+  deleteTrainer,
+} from "./utils/trainer";
 import { findPokemon } from "./utils/pokemon";
-import { mkdir, cp } from "fs/promises";
 
 const app = express();
 
@@ -26,13 +30,9 @@ app.get("/", (_req, res) => {
 /** トレーナー名の一覧の取得 */
 app.get("/trainers", async (_req, res, next) => {
   try {
-    console.log("Enter trainers...")
     const trainers = await findTrainers();
-    console.log(JSON.stringify(trainers))
-    // TODO: 期待するレスポンスボディに変更する
-    const trainersName = trainers.map(({ Key }) => Key.replace(/\.json$/, ""));
-    console.log(trainersName);
-    res.send(trainersName);
+    const trainerNames = trainers.map(({ Key }) => Key.replace(/\.json$/, ""));
+    res.send(trainerNames);
   } catch (err) {
     next(err);
   }
@@ -41,23 +41,12 @@ app.get("/trainers", async (_req, res, next) => {
 /** トレーナーの追加 */
 app.post("/trainer", async (req, res, next) => {
   try {
-    console.log(`Enter [post] /trainer - ${JSON.stringify(req.body)}`)
-    // TODO: トレーナー名が含まれていなければ400を返す
-    if (req.body.name == "") {
-      console.log("400")
+    if (!("name" in req.body && req.body.name.length > 0))
       return res.sendStatus(400);
-    }
     const trainers = await findTrainers();
-    if (trainers.some(({ Key }) => Key === req.body.name + ".json")) {
-      console.log("409")
+    if (trainers.some(({ Key }) => Key === `${req.body.name}.json`))
       return res.sendStatus(409);
-    }
-    // TODO: すでにトレーナーが存在していれば409を返す
     const result = await upsertTrainer(req.body.name, req.body);
-    console.log(JSON.stringify(result));
-    // /// フォルダの作成
-    // await mkdir(`./pages/${req.body.name}`);
-    // await cp(`./pages/tmp.vue`, `./pages/${req.body.name}/index.vue`);
     res.status(result["$metadata"].httpStatusCode).send(result);
   } catch (err) {
     next(err);
@@ -65,15 +54,12 @@ app.post("/trainer", async (req, res, next) => {
 });
 
 /** トレーナーの取得 */
-// TODO: トレーナーを取得する API エンドポイントの実装
 app.get("/trainer/:trainerName", async (req, res, next) => {
   try {
     const { trainerName } = req.params;
-    const result = await findTrainer(trainerName); ///////////////
-    console.log(`FindTrainer result - ${JSON.stringify(result)}`)
-    res.send(result);
-  }
-  catch (err) {
+    const trainer = await findTrainer(trainerName);
+    res.send(trainer);
+  } catch (err) {
     next(err);
   }
 });
@@ -82,7 +68,9 @@ app.get("/trainer/:trainerName", async (req, res, next) => {
 app.post("/trainer/:trainerName", async (req, res, next) => {
   try {
     const { trainerName } = req.params;
-    // TODO: トレーナーが存在していなければ404を返す
+    const trainers = await findTrainers();
+    if (!trainers.some(({ Key }) => Key === `${trainerName}.json`))
+      return res.sendStatus(404);
     const result = await upsertTrainer(trainerName, req.body);
     res.status(result["$metadata"].httpStatusCode).send(result);
   } catch (err) {
@@ -91,24 +79,15 @@ app.post("/trainer/:trainerName", async (req, res, next) => {
 });
 
 /** トレーナーの削除 */
-// TODO: トレーナーを削除する API エンドポイントの実装
-app.delete("/trainer/:trainerName",
-  async (req, res, next) => {
-    try {
-      const { trainerName, pokemonId } = req.params;
-      const trainer = await findTrainer(trainerName);
-      const index = trainer.pokemons.findIndex(
-        (pokemon) => String(pokemon.id) === pokemonId
-      );
-      trainer.pokemons.splice(index, 1);
-      const result = await deleteTrainer(trainerName);
-      res.status(result["$metadata"].httpStatusCode).send(result);
-    } catch (err) {
-      next(err);
-    }
+app.delete("/trainer/:trainerName", async (req, res, next) => {
+  try {
+    const { trainerName } = req.params;
+    const result = await deleteTrainer(trainerName);
+    res.status(result["$metadata"].httpStatusCode).send(result);
+  } catch (err) {
+    next(err);
   }
-);
-
+});
 
 /** ポケモンの追加 */
 app.put(
@@ -118,8 +97,19 @@ app.put(
       const { trainerName, pokemonName } = req.params;
       const trainer = await findTrainer(trainerName);
       const pokemon = await findPokemon(pokemonName);
-      // TODO: 削除系 API エンドポイントを利用しないかぎりポケモンは保持する
-      const result = await upsertTrainer(trainerName, { pokemons: [pokemon] });
+      const {
+        order,
+        name,
+        sprites: { front_default },
+      } = pokemon;
+      trainer.pokemons.push({
+        id: (trainer.pokemons[trainer.pokemons.length - 1]?.id ?? 0) + 1,
+        nickname: "",
+        order,
+        name,
+        sprites: { front_default },
+      });
+      const result = await upsertTrainer(trainerName, trainer);
       res.status(result["$metadata"].httpStatusCode).send(result);
     } catch (err) {
       next(err);
@@ -128,6 +118,22 @@ app.put(
 );
 
 /** ポケモンの削除 */
-// TODO: ポケモンを削除する API エンドポイントの実装
+app.delete(
+  "/trainer/:trainerName/pokemon/:pokemonId",
+  async (req, res, next) => {
+    try {
+      const { trainerName, pokemonId } = req.params;
+      const trainer = await findTrainer(trainerName);
+      const index = trainer.pokemons.findIndex(
+        (pokemon) => String(pokemon.id) === pokemonId
+      );
+      trainer.pokemons.splice(index, 1);
+      const result = await upsertTrainer(trainerName, trainer);
+      res.status(result["$metadata"].httpStatusCode).send(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 export default app;

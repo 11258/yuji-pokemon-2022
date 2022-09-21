@@ -4,6 +4,7 @@ export default {
     const { data: trainers } = await useTrainers();
     return { trainers };
   },
+
 };
 </script>
 
@@ -17,3 +18,4 @@ export default {
     </GamifyList>
   </div>
 </template>
+  

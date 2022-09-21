@@ -9,11 +9,11 @@ export default {
     const router = useRouter();
     const { data: trainer, refresh } = await useAsyncData(
       `/trainer/${route.params.name}`,
-      () => $fetch(`${VITE_SERVER_ORIGIN}api/trainer/${route.params.name}`)
+      () => $fetch(`${VITE_SERVER_ORIGIN}/api/trainer/${route.params.name}`)
     );
     const onDelete = async () => {
       const response = await fetch(
-        `${VITE_SERVER_ORIGIN}api/trainer/${route.params.name}`,
+        `${VITE_SERVER_ORIGIN}/api/trainer/${route.params.name}`,
         {
           method: "DELETE",
         }
@@ -30,7 +30,7 @@ export default {
       newTrainer.pokemons[index].nickname = trimAvoidCharacters(nickname.value);
       nickname.value = "";
       const response = await fetch(
-        `${VITE_SERVER_ORIGIN}api/trainer/${route.params.name}`,
+        `${VITE_SERVER_ORIGIN}/api/trainer/${route.params.name}`,
         {
           method: "POST",
           headers: {
@@ -45,7 +45,7 @@ export default {
     };
     const onRelease = async (pokemonId) => {
       const response = await fetch(
-        `${VITE_SERVER_ORIGIN}api/trainer/${route.params.name}/pokemon/${pokemonId}`,
+        `${VITE_SERVER_ORIGIN}/api/trainer/${route.params.name}/pokemon/${pokemonId}`,
         {
           method: "DELETE",
         }
@@ -87,19 +87,28 @@ export default {
     };
   },
   components: { GamifyButton },
+  /// 結局Chromiumの仕様上、起動時＝ページ読み込み時に音声再生は無理だった…orz
+  /// たくみくんのむだづかい、、、
+  // data: () => ({
+  //   audio: new Audio(require('@assets/pokemon.mp3'))
+  // }),
+  // created () {
+  //   this.audio.play();
+  // }
 };
 </script>
-
+  
 <template>
   <div>
     <h1>トレーナー情報</h1>
+    <audio controls loop>
+      <source src="../../assets/voice/pokemon.mp3" type="audio/mp3" />
+    </audio>
     <div class="trainer-info">
       <img src="/avatar.png" />
       <span>{{ trainer.name }}</span>
     </div>
-    <GamifyButton @click="onOpenDelete(true)">
-      マサラタウンにかえる</GamifyButton
-    >
+    <GamifyButton @click="onOpenDelete(true)">マサラタウンにかえる</GamifyButton>
     <h2>てもちポケモン</h2>
     <CatchButton :to="`/trainer/${trainer.name}/catch`">ポケモンをつかまえる</CatchButton>
     <GamifyList>
@@ -136,7 +145,8 @@ export default {
         </GamifyItem>
       </GamifyList>
     </GamifyDialog>
-    <GamifyDialog v-if="releaseDialog" id="confirm-release" title="かくにん" :description="`ほんとうに　${releaseDialog.nickname || releaseDialog.name
+    <GamifyDialog v-if="releaseDialog" id="confirm-release" title="かくにん" :description="`ほんとうに　${
+      releaseDialog.nickname || releaseDialog.name
     }　を　はかせに　おくるんだな！　この　そうさは　とりけせないぞ！`" @close="onCloseRelease">
       <GamifyList :border="false" direction="horizon">
         <GamifyItem>
@@ -149,7 +159,7 @@ export default {
     </GamifyDialog>
   </div>
 </template>
-
+  
 <style scoped>
 .item>label {
   display: block;
