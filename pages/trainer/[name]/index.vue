@@ -102,7 +102,7 @@ export default {
   <div>
     <h1>トレーナー情報</h1>
     <audio controls loop>
-      <source src="../../assets/voice/pokemon.mp3" type="audio/mp3" />
+      <source src="/pokemon.mp3" type="audio/mp3" />
     </audio>
     <div class="trainer-info">
       <img src="/avatar.png" />
